@@ -3,10 +3,13 @@
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
-#include <set>
+#include <ctime>
+
+#define uchar unsigned char
 
 // Sudoku input
-const int board[9][9] = { {5, 3, 0, 0, 7, 0, 0, 0, 0},
+// Changed from int to uchar for less storage space
+const uchar board[9][9] = { {5, 3, 0, 0, 7, 0, 0, 0, 0},
                  {6, 0, 0, 1, 9, 5, 0, 0, 0},
                  {0, 9, 8, 0, 0, 0, 0, 6, 0},
                  {8, 0, 0, 0, 6, 0, 0, 0, 3},
@@ -40,13 +43,13 @@ bool host_check_general(int cols, int rows) {
 /// <param name="board">1D array that represents the board</param>
 /// <param name="row">nth row</param>
 /// <returns>Valid or not</returns>
-bool host_check_row(int * board, int row) {
+bool host_check_row(uchar * board, int row) {
     int starter = row * 9 ; // Passes n values to start a new row
-    std::set<int> row_values;
+    bool row_values[9] = { false };
     for (int i = 0; i < 9; i++) {
         if (board[i + starter] == 0) continue;
-        if (row_values.find(board[i + starter]) != row_values.end()) return 0;
-        row_values.insert(board[i + starter]);
+        if (row_values[board[i + starter] - 1]) return 0;
+        row_values[board[i + starter] - 1] = true;
     }
     return true;
 }
@@ -57,13 +60,13 @@ bool host_check_row(int * board, int row) {
 /// <param name="board">1D array that represents the sudoku board</param>
 /// <param name="col">nth column of the board</param>
 /// <returns>Valid or not</returns>
-bool host_check_col(int * board, int col) {
+bool host_check_col(uchar * board, int col) {
     int starter = col;
-    std::set<int> col_values;
+    bool col_values[9] = { false };
     for (int i = 0; i < 9; i++) {
         if (board[i * 9 + starter] == 0) continue;
-        if (col_values.find(board[i * 9 + starter]) != col_values.end()) return 0;
-        col_values.insert(board[i * 9 + starter]);
+        if (col_values[board[i * 9 + starter] - 1]) return 0;
+        col_values[board[i * 9 + starter - 1]];
     }
     return true;
 }
@@ -74,15 +77,15 @@ bool host_check_col(int * board, int col) {
 /// <param name="board">1D array that represents the sudoku board</param>
 /// <param name="sub">nth subspace of the board</param>
 /// <returns>Was the subspace valid or not</returns>
-bool host_check_subsquare(int* board, int sub) {
+bool host_check_subsquare(uchar* board, int sub) {
     int col = (sub % 3) * 3, row = (sub / 3) * 3;
-    std::set<int> square_values;
+    bool square_values[9] = { false };
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             int starter = (row + i) * 9 + col + j;
             if (board[starter] == 0) continue;
-            if (square_values.find(board[starter]) != square_values.end()) return 0;
-            square_values.insert(board[starter]);
+            if (square_values[board[starter] - 1]) return 0;
+            square_values[board[starter] - 1] = true;
         }
     }
     return 1;
@@ -95,7 +98,7 @@ bool host_check_subsquare(int* board, int sub) {
 /// <param name="col">nth column</param>
 /// <param name="row">nth row</param>
 /// <returns>Was the subsace valid or not</returns>
-bool host_check_subsquare(int* board, int col, int row) {
+bool host_check_subsquare(uchar* board, int col, int row) {
     int sub = col / 3 + (row / 3) * 3;
     return host_check_subsquare(board, sub);
 }
@@ -105,7 +108,7 @@ bool host_check_subsquare(int* board, int col, int row) {
 /// </summary>
 /// <param name="board">1D array that represents the sudoku board</param>
 /// <returns>Is the board valid or not</returns>
-bool host_check_all(int* board) {
+bool host_check_all(uchar* board) {
     bool format = true;
     for (int i = 0; i < 9; i++) {
         format = format && host_check_row(board, i);
@@ -127,7 +130,7 @@ bool host_check_all(int* board) {
 /// <param name="col">Column to place <i>n<i></param>
 /// <param name="row">Row to place <i>n<i></param>
 /// <returns></returns>
-bool host_check_validity(int* board, int n, int col, int row) {
+bool host_check_validity(uchar* board, int n, int col, int row) {
     for (int i = 0; i < 9; i++)
         if (board[row * 9 + i] == n || board[i * 9 + col] == n) return false;
     int sub_row_start = (row / 3) * 3;
@@ -143,7 +146,7 @@ bool host_check_validity(int* board, int n, int col, int row) {
 /// </summary>
 /// <param name="board">1D array that represents the sudoku board</param>
 /// <returns>-1 invalid format. 0 no solution. 1 solution was found</returns>
-int host_solve_sudoku(int* board) {
+int host_solve_sudoku(uchar* board) {
     if (!host_check_all(board)) return -1; // Board is not valid
     for (int row = 0; row < 9; row++) {
         for (int col = 0; col < 9; col++) {
@@ -169,7 +172,7 @@ int host_solve_sudoku(int* board) {
 /// <param name="pointer">Pointer to print</param>
 /// <param name="size">Number of elements of the pointer</param>
 /// <param name="max_inline">Number of elements in each line before a newline</param>
-void print_pointer(int* pointer, int size, int max_inline = -1) {
+void print_pointer(uchar* pointer, int size, int max_inline = -1) {
     if (max_inline <= 0) {
         for (int i = 0; i < size; i++) printf("\n%d", pointer[i]);
     }
@@ -192,7 +195,7 @@ void print_pointer(int* pointer, int size, int max_inline = -1) {
 /// <param name="board">1D array representing the sudoku board</param>
 /// <param name="col">The nth column of the board</param>
 /// <returns>Was the column valid or not</returns>
-__device__ bool device_check_col(int* board, int col) {
+__device__ bool device_check_col(uchar* board, int col) {
     bool col_values[9] = {false};
     for (int i = 0; i < 9; i++) {
         if (!board[i * 9 + col]) continue;
@@ -208,7 +211,7 @@ __device__ bool device_check_col(int* board, int col) {
 /// <param name="board">1D array representing the sudoku board</param>
 /// <param name="row">The nth row of the board</param>
 /// <returns>Was the row valid or not</returns>
-__device__ bool device_check_row(int* board, int row) {
+__device__ bool device_check_row(uchar* board, int row) {
     bool row_values[9] = { false };
     for (int i = 0; i < 9; i++) {
         if (!board[row * 9 + i]) continue;
@@ -224,7 +227,7 @@ __device__ bool device_check_row(int* board, int row) {
 /// <param name="board">1D array representing the sudoku board</param>
 /// <param name="square">nth subsquare of the board</param>
 /// <returns>Was the subsquare valid or not</returns>
-__device__ bool device_check_subsquare(int* board, int square) {
+__device__ bool device_check_subsquare(uchar* board, int square) {
     bool square_values[9] = { false };
     int row = (square / 3) * 3, col = (square % 3) * 3;
     int start_cell = row * 9 + col;
@@ -247,7 +250,7 @@ __device__ bool device_check_subsquare(int* board, int square) {
 /// <param name="board">1D array representing the sudoku board</param>
 /// <param name="status">Was the board valid or not</param>
 /// <returns>Void</returns>
-__global__ void device_validity_all(int* board, bool* status) {
+__global__ void device_validity_all(uchar* board, bool* status) {
     int gid = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
     int oid = gid; //Operation id
     if (gid >= 27) return;
@@ -274,7 +277,7 @@ __global__ void device_validity_all(int* board, bool* status) {
 /// <param name="col">the nth column of the board</param>
 /// <param name="n">An int value from 1 to 9</param>
 /// <returns>If the number is valid at that cell</returns>
-__device__ bool device_is_valid(int* board, int row, int col, int n) {
+__device__ bool device_is_valid(uchar* board, int row, int col, int n) {
     // Check all cells in a row
     for (int i = 0; i < 9; i++) if (board[row * 9 + i] == n) return false;
     // Check all cells in a column
@@ -287,13 +290,13 @@ __device__ bool device_is_valid(int* board, int row, int col, int n) {
 }
 
 /// <summary>
-/// A kernel that tries to solve the sudoku boar dvia recursive backtracking
+/// A kernel that tries to solve the sudoku board via recursive backtracking
 /// Check if this method works in GPU, if not look for another
 /// </summary>
 /// <param name="board">1D array representing the sudoku board</param>
 /// <param name="found">Was a solution found</param>
 /// <returns>Void</returns>
-__global__ void device_solve_sudoku(int* board, bool* found) {
+__global__ void device_solve_sudoku(uchar* board, bool* found) {
     int gid = blockIdx.x * blockDim.x + threadIdx.x;
     if (*found) return;
     if (gid >= 81) return;
@@ -302,13 +305,18 @@ __global__ void device_solve_sudoku(int* board, bool* found) {
 
     if (board[gid] == 0) {
         for (int num = 1; num <= 9; num++) {
+            board[gid] = num;
+            __syncthreads();
             if (device_is_valid(board, row, col, num)) {
                 board[gid] = num;
                 device_solve_sudoku << <1, 1 >> > (board, found);
-                __syncthreads();
                 if (*found == 1) return;
                 board[gid] = 0;
             }
+            else {
+                board[gid] = 0;
+            }
+            __syncthreads();
         }
     }
     else {
@@ -320,23 +328,44 @@ __global__ void device_solve_sudoku(int* board, bool* found) {
     if (row == 8 && col == 8 && board[row * 9 + col] != 0) *found = 1;
 }
 
-
 int main()
 {
-    int* host_pointer;
-    int* device_pointer;
-    int* sudoku_board;
+    uchar* host_pointer;
+    uchar* device_pointer;
+    uchar* sudoku_board;
     // 81 because sudoku boards always have 81 values
-    host_pointer = (int*)malloc(sizeof(int) * 81);
-    cudaMalloc((void**)&device_pointer, sizeof(int) * 81);
-    sudoku_board = (int*)malloc(sizeof(int) * 81);
+    host_pointer = (uchar*)malloc(sizeof(uchar) * 81);
+    cudaMalloc((void**)&device_pointer, sizeof(uchar) * 81);
+    sudoku_board = (uchar*)malloc(sizeof(uchar) * 81);
     for (int i = 0; i < 81; i++) {
         int row = i / 9;
         int col = i % 9;
         host_pointer[i] = board[row][col];
         sudoku_board[i] = board[row][col];
     }
-    cudaMemcpy(device_pointer, host_pointer, sizeof(int) * 81, cudaMemcpyHostToDevice);
+    
+    clock_t start, end;
+    double time_used;
+
+    cudaMemcpy(device_pointer, host_pointer, sizeof(uchar) * 81, cudaMemcpyHostToDevice);
+    start = clock();
+    int result = host_solve_sudoku(host_pointer);
+    if (result == 1) {
+        printf("\nValid format");
+        printf("\nSudoku board solved\n");
+        print_pointer(host_pointer, 81, 9);
+    }
+    else if (result == 0) {
+        printf("\nValid format");
+        printf("\nThere was no solution");
+    }
+    else {
+        printf("\nFormat was invalid");
+    }
+    end = clock();
+    time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("\nTotal Time CPU: %lf", time_used);
+
     bool status = true;
     // Size of warp
     device_validity_all << <1, 32 >> > (device_pointer, &status);
@@ -350,15 +379,15 @@ int main()
     bool solved = false;
     // Three warps
     device_solve_sudoku << <1, 96 >> > (device_pointer, &solved);
-    cudaMemcpy(host_pointer, device_pointer, sizeof(int) * 81, cudaMemcpyDeviceToHost);
+    cudaMemcpy(host_pointer, device_pointer, sizeof(uchar) * 81, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
-    print_pointer(host_pointer, 81, 9);
     if (!solved)
     {
         printf("\nNo solution was found");
         return 0;
     }
     else printf("\nSolution was found");
+    print_pointer(host_pointer, 81, 9);
     free(host_pointer);
     free(sudoku_board);
     cudaFree(device_pointer);
